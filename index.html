@@ -4,362 +4,382 @@
 <meta charset="UTF-8"/>
 <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
 <title>Off the Main Road — Destination Map</title>
-
 <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
 <link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
-<link rel="preconnect" href="https://fonts.googleapis.com"/>
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
-
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  body {
-    font-family: 'Inter', sans-serif;
-    background: #f5f2ee;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-  }
+body {
+  font-family: 'Inter', sans-serif;
+  height: 100vh;
+  overflow: hidden;
+  background: #f5f2ee;
+}
 
+#map {
+  width: 100%;
+  height: 100vh;
+}
 
+.otmr-cluster {
+  background: #61856F;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  color: #fff;
+  font-family: 'Inter', sans-serif;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+}
 
-  /* ── Main layout ── */
-  #app {
-    display: flex;
-    flex: 1;
-    overflow: hidden;
-    position: relative;
-  }
+#sidebar {
+  position: fixed;
+  top: 0;
+  right: 0;
+  width: 300px;
+  height: 100%;
+  background: #fff;
+  border-left: 1px solid #e8e4de;
+  display: flex;
+  flex-direction: column;
+  z-index: 1000;
+  transform: translateX(100%);
+  transition: transform 0.28s ease;
+  box-shadow: -4px 0 20px rgba(0,0,0,0.1);
+}
 
-  /* ── Map ── */
-  #map {
-    flex: 1;
-    z-index: 1;
-  }
+#sidebar.open {
+  transform: translateX(0);
+}
 
-  /* Leaflet tile credit */
-  .leaflet-control-attribution {
-    font-size: 10px !important;
-  }
+#sb-img-wrap {
+  position: relative;
+  height: 180px;
+  flex-shrink: 0;
+  background: #f0ece6;
+  overflow: hidden;
+}
 
-  /* Custom cluster style */
-  .otmr-cluster {
-    background: #61856F;
-    border: 3px solid #fff;
-    border-radius: 50%;
-    color: #fff;
-    font-family: 'Inter', sans-serif;
-    font-size: 13px;
-    font-weight: 600;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
-    transition: transform 0.15s ease;
-  }
+#sb-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: none;
+  position: absolute;
+  top: 0; left: 0;
+}
 
-  .otmr-cluster:hover { transform: scale(1.1); }
+#sb-placeholder {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
 
-  /* ── Sidebar ── */
-  #sidebar {
-    position: absolute;
-    top: 0;
-    right: 0;
-    width: 300px;
-    height: 100%;
-    background: #fff;
-    border-left: 1px solid #e8e4de;
-    display: flex;
-    flex-direction: column;
-    z-index: 500;
-    transform: translateX(100%);
-    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
-    box-shadow: -4px 0 20px rgba(0,0,0,0.08);
-  }
+#sb-close {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  background: rgba(0,0,0,0.5);
+  border: none;
+  cursor: pointer;
+  color: #fff;
+  font-size: 16px;
+  line-height: 30px;
+  text-align: center;
+  z-index: 10;
+}
 
-  #sidebar.open {
-    transform: translateX(0);
-  }
+#sb-close:hover { background: rgba(0,0,0,0.75); }
 
-  /* Sidebar image */
-  #sb-img-wrap {
-    position: relative;
-    height: 180px;
-    background: #f0ece6;
-    flex-shrink: 0;
-    overflow: hidden;
-  }
+#sb-body {
+  padding: 18px;
+  flex: 1;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
 
-  #sb-img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
-    display: block;
-  }
+#sb-tag {
+  display: inline-block;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  padding: 3px 10px;
+  border-radius: 20px;
+  align-self: flex-start;
+}
 
-  #sb-img-placeholder {
-    width: 100%;
-    height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    background: #f0ece6;
-  }
+#sb-title {
+  font-size: 16px;
+  font-weight: 600;
+  color: #2c2a26;
+  line-height: 1.3;
+}
 
-  #sb-img-placeholder svg {
-    opacity: 0.35;
-  }
+#sb-location {
+  font-size: 12px;
+  color: #8a8278;
+}
 
-  /* Close button */
-  #sb-close {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    width: 30px;
-    height: 30px;
-    border-radius: 50%;
-    background: rgba(0,0,0,0.5);
-    border: none;
-    cursor: pointer;
-    color: #fff;
-    font-size: 16px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    line-height: 1;
-    transition: background 0.15s;
-    z-index: 10;
-  }
+#sb-excerpt {
+  font-size: 13px;
+  color: #5a5650;
+  line-height: 1.65;
+  flex: 1;
+}
 
-  #sb-close:hover { background: rgba(0,0,0,0.75); }
+#sb-btn {
+  display: block;
+  text-align: center;
+  padding: 11px 16px;
+  background: #2c2a26;
+  color: #fff;
+  border-radius: 6px;
+  font-size: 13px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.15s;
+}
 
-  /* Sidebar body */
-  #sb-body {
-    padding: 18px;
-    flex: 1;
-    overflow-y: auto;
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-  }
+#sb-btn:hover { background: #61856F; }
 
-  #sb-tag {
-    display: inline-block;
-    font-size: 10px;
-    font-weight: 600;
-    letter-spacing: 0.07em;
-    text-transform: uppercase;
-    padding: 3px 10px;
-    border-radius: 20px;
-    align-self: flex-start;
-  }
-
-  #sb-title {
-    font-size: 18px;
-    font-weight: 600;
-    color: #2c2a26;
-    line-height: 1.25;
-  }
-
-  #sb-state-line {
-    font-size: 12px;
-    color: #8a8278;
-    margin-top: -6px;
-  }
-
-  #sb-excerpt {
-    font-size: 13px;
-    color: #5a5650;
-    line-height: 1.65;
-    flex: 1;
-  }
-
-  #sb-btn {
-    display: block;
-    text-align: center;
-    padding: 11px 16px;
-    background: #2c2a26;
-    color: #fff;
-    border-radius: 6px;
-    font-size: 13px;
-    font-weight: 500;
-    text-decoration: none;
-    letter-spacing: 0.02em;
-    transition: background 0.15s;
-    margin-top: auto;
-  }
-
-  #sb-btn:hover { background: #61856F; }
-
-
-
-
+.leaflet-control-attribution { font-size: 10px !important; }
 </style>
 </head>
 <body>
 
+<div id="map"></div>
 
-
-<div id="app">
-
-  <div id="map"></div>
-
-
-
-  <!-- Sidebar -->
-  <div id="sidebar">
-    <div id="sb-img-wrap">
-      <div id="sb-img-placeholder">
-        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2c2a26" stroke-width="1.2">
-          <rect x="3" y="3" width="18" height="18" rx="2"/>
-          <circle cx="8.5" cy="8.5" r="1.5"/>
-          <polyline points="21 15 16 10 5 21"/>
-        </svg>
-      </div>
-      <img id="sb-img" src="" alt="" style="display:none; position:absolute; top:0; left:0;"/>
-      <button id="sb-close" onclick="closeSidebar()" aria-label="Close">&#x2715;</button>
+<div id="sidebar">
+  <div id="sb-img-wrap">
+    <img id="sb-img" src="" alt=""/>
+    <div id="sb-placeholder">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2c2a26" stroke-width="1.2" opacity="0.3">
+        <rect x="3" y="3" width="18" height="18" rx="2"/>
+        <circle cx="8.5" cy="8.5" r="1.5"/>
+        <polyline points="21 15 16 10 5 21"/>
+      </svg>
     </div>
-    <div id="sb-body">
-      <span id="sb-tag"></span>
-      <p id="sb-title"></p>
-      <p id="sb-state-line"></p>
-      <p id="sb-excerpt"></p>
-      <a id="sb-btn" href="#" target="_blank">Read the article &rarr;</a>
-    </div>
+    <button id="sb-close" onclick="closeSidebar()">&#x2715;</button>
   </div>
-
-
-
+  <div id="sb-body">
+    <span id="sb-tag"></span>
+    <p id="sb-title"></p>
+    <p id="sb-location"></p>
+    <p id="sb-excerpt"></p>
+    <a id="sb-btn" href="#" target="_blank">Read the article &rarr;</a>
+  </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
 
-/* ── Destination data ──────────────────────────────────────────
-   To add a new article, copy any entry below and paste it at
-   the top of the array. Fill in the details and save.
-──────────────────────────────────────────────────────────────── */
-const destinations = [
-  { name:"Boulia", state:"QLD", lat:-22.9047, lng:139.9061, title:"Boulia: A week chasing the Min Min", excerpt:"Three days out to Boulia via Poddy Creek and the Middleton Hotel, the Min Min Encounter, outback sunsets and no actual Min Min sightings. Then north to a spectacular free camp at Dajarra Dam on the way to Mount Isa.", url:"https://www.offthemainroad.com.au/latest/boulia", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a3c5cc7774b644a07a243f0/1782340807179/Boulia_31.jpg?format=1500w" },
-  { name:"Longreach", state:"QLD", lat:-23.4392, lng:144.2510, title:"Things to Do in Longreach: Our Favourites", excerpt:"After three visits, here's what we'd actually send a friend to do in Longreach! Qantas history, outback rail and river tours, and a stockman's show. Not everything, just our favourites.", url:"https://www.offthemainroad.com.au/latest/things-to-do-in-longreach", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a20c024354bc75359724f91/1781470875257/IMG_3886.jpeg?format=1500w" },
-  { name:"Longreach", state:"QLD", lat:-23.4450, lng:144.2600, title:"Longreach: Rail, River and a Town That Waves Back", excerpt:"Back in Longreach for our third visit. Outback rail adventures, a sunset cruise on the Thomson River, the Longreach Races, new Akubras, and the friendliest welcome yet.", url:"https://www.offthemainroad.com.au/latest/longreach-3", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a3c5cc7774b644a07a243f0/1782340807179/Boulia_31.jpg?format=1500w" },
-  { name:"Blackall", state:"QLD", lat:-24.4247, lng:145.4680, title:"Blackall: Wool, Steam and Unbroken Records", excerpt:"Blackall's Historical Woolscour is the only surviving steam-powered woolscour in Australia, operating since 1908. Add Jackie Howe's unbroken shearing record and a free camp on the Barcoo River.", url:"https://www.offthemainroad.com.au/latest/blackall", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/677dc820029b773470613833/6a20c024354bc75359724f91/1781470875257/IMG_3886.jpeg?format=1500w" },
-  { name:"Tambo", state:"QLD", lat:-24.8844, lng:146.2558, title:"Tambo: Teddies, Chickens and Qantas History", excerpt:"Tambo delivers more than it advertises — Tambo Teddies and a station side quest, chicken races that got out of hand, and the site of Qantas's first fatal crash in 1927. A small town with a lot going on.", url:"https://www.offthemainroad.com.au/latest/tambo-1", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a23fb6b71545e6381c7e56c/1780743019527/IMG_3870.jpg?format=1500w" },
-  { name:"Charleville", state:"QLD", lat:-26.4032, lng:146.2413, title:"Charleville: Finding the Hidden Gems", excerpt:"Four visits to Charleville and still finding new things — the Angellala Creek explosion site, the Airfield Museum, the Bureau of Meteorology weather balloon and the WWII quarry that built the airport runways.", url:"https://www.offthemainroad.com.au/latest/charleville-3", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a21462a9d129d02efd45d12/1780565546968/IMG_4296.jpg?format=1500w" },
-  { name:"Charleville", state:"QLD", lat:-26.4100, lng:146.2350, title:"Things to Do in Charleville: Slow Down, Stay Longer", excerpt:"From the Cosmos Centre and Bilby Experience to the Airfield Museum, WWII Secret Base, Outback Date Farm, and the Angellala Creek explosion site. There's a lot going on!", url:"https://www.offthemainroad.com.au/latest/things-to-do-in-charleville", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a273cf0dbedb812c3245cd2/1780956400251/OTMR+Website+Social+Sharing+Images+%281080+x+566+px%29+Charleville.jpg?format=1500w" },
-  { name:"Wyandra", state:"QLD", lat:-27.2167, lng:145.9833, title:"Wyandra: Sunsets and Silence", excerpt:"Halfway between Cunnamulla and Charleville, Wyandra is a quiet railway town on the Warrego River with a sandy beach, outback burgers, a peaceful camp and sunsets good enough for a calendar cover.", url:"https://www.offthemainroad.com.au/latest/wyandra", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a20aec4dbedb812c320005e/1780526788296/IMG_4191.jpg?format=1500w" },
-  { name:"Cunnamulla", state:"QLD", lat:-28.0675, lng:145.6839, title:"Cunnamulla: Rails, Races and Hot Springs", excerpt:"An overnight pub camp at Enngonia, then north to Cunnamulla; the Robbers Tree, the All Aboard rail show, a day at the races for Neil and artesian hot springs for Cameron. A weekend well spent.", url:"https://www.offthemainroad.com.au/latest/cunnamulla-2", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a1b70d25c8ba819bdaf29f1/1780183250180/IMG_3706.jpeg?format=1500w" },
-  { name:"Bourke", state:"NSW", lat:-30.0920, lng:145.9358, title:"Bourke: Where the Darling Tells the Story", excerpt:"Five rain-soaked days at Nyngan Weir and then north to Bourke, the Darling River's great port, Fred Hollows' resting place, an Afghan mosque in the outback, and a town that rewards anyone who slows down.", url:"https://www.offthemainroad.com.au/latest/bourke", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a1b618f089d1869aaa517c4/1780179343478/IMG_4008.jpg?format=1500w" },
-  { name:"Hay", state:"NSW", lat:-34.5100, lng:144.8400, title:"Hay: History on the Murrumbidgee", excerpt:"From Melbourne via Warrnambool and St Arnaud to Hay, a town that keeps earning return visits. Free camping on the Murrumbidgee, a gaol with many lives, and one of regional NSW's most joyful festivals.", url:"https://www.offthemainroad.com.au/latest/hay", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/677dc820029b773470613833/697aa04f83e25f0382b1edeb/1780120213359/IMG_3428.jpeg?format=1500w" },
-  { name:"Warrnambool", state:"VIC", lat:-38.3831, lng:142.4872, title:"A Slow Day in Warrnambool", excerpt:"A slow morning in the mist at Warrnambool's historic Botanic Gardens, a drive out to Hopkins Falls running at full strength, and an afternoon browsing Fletcher Jones Market.", url:"https://www.offthemainroad.com.au/latest/a-slow-day-in-warrnambool", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/69b0919d4760651bbaaa7e33/1773179293609/IMG_3559.jpeg?format=1500w" },
-  { name:"Winchelsea", state:"VIC", lat:-38.2443, lng:143.9988, title:"Winchelsea: Bluestone, Rabbits, and the Barwon", excerpt:"Two nights on the Barwon River at Winchelsea's free camp, and a guided tour of Barwon Park Mansion, the bluestone homestead built to impress a duke, by the man who gave Australia its rabbit problem.", url:"https://www.offthemainroad.com.au/latest/winchelsea-barwon-mansion", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/677dc820029b773470613833/69c63f66de6bf151f92888ee/1781332364103/IMG_3110.jpg?format=1500w" },
-  { name:"Ararat", state:"VIC", lat:-37.2833, lng:142.9167, title:"Ararat: Visiting J Ward", excerpt:"J Ward in Ararat began as a gold rush gaol before becoming Victoria's Criminally Insane Division. A guided tour reveals bluestone cells, preserved gallows, and a confronting chapter in Australia's justice and mental health history.", url:"https://www.offthemainroad.com.au/latest/ararat-j-ward-prison-history-tour", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6997872a8896f80cff40c8b3/1771538218608/IMG_3368.jpg?format=1500w" },
-  { name:"Ararat", state:"VIC", lat:-37.2900, lng:142.9200, title:"Ararat: Inside Aradale", excerpt:"Aradale in Ararat is one of Australia's largest former psychiatric hospitals. A guided history tour reveals confronting stories, evolving mental health care, and the complex legacy of an institution that operated for more than a century.", url:"https://www.offthemainroad.com.au/latest/ararat-aradale-history-tour", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6997833046b7fa27bfe876e6/1771537200324/IMG_3327.jpeg?format=1500w" },
-  { name:"Queenscliff", state:"VIC", lat:-38.2667, lng:144.6667, title:"Queenscliff: Dining on The Q Train", excerpt:"A moving degustation through Bellarine farmland, The Q Train pairs heritage rail with seriously good food. From steam departures to thoughtful non-alcoholic pairings, it's one of Victoria's most memorable regional dining experiences.", url:"https://www.offthemainroad.com.au/latest/queenscliff-the-q-train-bellarine", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/699648f4f1e922404285c769/1771456756210/IMG_1749.jpeg?format=1500w" },
-  { name:"Werribee", state:"VIC", lat:-37.9000, lng:144.6600, title:"Werribee Open Range Zoo: A Safari Near the City", excerpt:"Werribee Open Range Zoo offers a surprisingly immersive safari experience just outside Melbourne. With open savannahs, accessible paths, and thoughtful design, it feels far removed from the city while remaining easy to navigate.", url:"https://www.offthemainroad.com.au/latest/werribee-zoo", img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6986620f6a1d184ccf950f84/1770414607910/IMG_2681.jpeg?format=1500w" }
-];
-
-initMap();
-
 const PIN_COLOR = "#61856F";
 
-function initMap() {
+const STATE_NAMES = {
+  QLD: "Queensland", NSW: "New South Wales", VIC: "Victoria",
+  SA: "South Australia", WA: "Western Australia", NT: "Northern Territory", TAS: "Tasmania"
+};
 
-/* ── Map ── */
-const map = L.map('map', { center: [-26, 134], zoom: 4 });
+/* ── Destinations ──────────────────────────────────────────────
+   To add a new article, copy any entry and paste it at the top.
+   Fill in name, state, lat, lng, title, excerpt, url, img.
+────────────────────────────────────────────────────────────── */
+const destinations = [
+  { name:"Boulia", state:"QLD", lat:-22.9047, lng:139.9061,
+    title:"Boulia: A week chasing the Min Min",
+    excerpt:"Three days out to Boulia via Poddy Creek and the Middleton Hotel, the Min Min Encounter, outback sunsets and no actual Min Min sightings. Then north to a spectacular free camp at Dajarra Dam on the way to Mount Isa.",
+    url:"https://www.offthemainroad.com.au/latest/boulia",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a3c5cc7774b644a07a243f0/1782340807179/Boulia_31.jpg?format=1500w" },
+
+  { name:"Longreach", state:"QLD", lat:-23.4392, lng:144.2510,
+    title:"Things to Do in Longreach: Our Favourites",
+    excerpt:"After three visits, here's what we'd actually send a friend to do in Longreach! Qantas history, outback rail and river tours, and a stockman's show. Not everything, just our favourites.",
+    url:"https://www.offthemainroad.com.au/latest/things-to-do-in-longreach",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a20c024354bc75359724f91/1781470875257/IMG_3886.jpeg?format=1500w" },
+
+  { name:"Longreach", state:"QLD", lat:-23.4450, lng:144.2600,
+    title:"Longreach: Rail, River and a Town That Waves Back",
+    excerpt:"Back in Longreach for our third visit. Outback rail adventures, a sunset cruise on the Thomson River, the Longreach Races, new Akubras, and the friendliest welcome yet.",
+    url:"https://www.offthemainroad.com.au/latest/longreach-3",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a3c5cc7774b644a07a243f0/1782340807179/Boulia_31.jpg?format=1500w" },
+
+  { name:"Blackall", state:"QLD", lat:-24.4247, lng:145.4680,
+    title:"Blackall: Wool, Steam and Unbroken Records",
+    excerpt:"Blackall's Historical Woolscour is the only surviving steam-powered woolscour in Australia, operating since 1908. Add Jackie Howe's unbroken shearing record and a free camp on the Barcoo River.",
+    url:"https://www.offthemainroad.com.au/latest/blackall",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/677dc820029b773470613833/6a20c024354bc75359724f91/1781470875257/IMG_3886.jpeg?format=1500w" },
+
+  { name:"Tambo", state:"QLD", lat:-24.8844, lng:146.2558,
+    title:"Tambo: Teddies, Chickens and Qantas History",
+    excerpt:"Tambo delivers more than it advertises — Tambo Teddies and a station side quest, chicken races that got out of hand, and the site of Qantas's first fatal crash in 1927. A small town with a lot going on.",
+    url:"https://www.offthemainroad.com.au/latest/tambo-1",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a23fb6b71545e6381c7e56c/1780743019527/IMG_3870.jpg?format=1500w" },
+
+  { name:"Charleville", state:"QLD", lat:-26.4032, lng:146.2413,
+    title:"Charleville: Finding the Hidden Gems",
+    excerpt:"Four visits to Charleville and still finding new things — the Angellala Creek explosion site, the Airfield Museum, the Bureau of Meteorology weather balloon and the WWII quarry that built the airport runways.",
+    url:"https://www.offthemainroad.com.au/latest/charleville-3",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a21462a9d129d02efd45d12/1780565546968/IMG_4296.jpg?format=1500w" },
+
+  { name:"Charleville", state:"QLD", lat:-26.4100, lng:146.2350,
+    title:"Things to Do in Charleville: Slow Down, Stay Longer",
+    excerpt:"From the Cosmos Centre and Bilby Experience to the Airfield Museum, WWII Secret Base, Outback Date Farm, and the Angellala Creek explosion site. There's a lot going on!",
+    url:"https://www.offthemainroad.com.au/latest/things-to-do-in-charleville",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a273cf0dbedb812c3245cd2/1780956400251/OTMR+Website+Social+Sharing+Images+%281080+x+566+px%29+Charleville.jpg?format=1500w" },
+
+  { name:"Wyandra", state:"QLD", lat:-27.2167, lng:145.9833,
+    title:"Wyandra: Sunsets and Silence",
+    excerpt:"Halfway between Cunnamulla and Charleville, Wyandra is a quiet railway town on the Warrego River with a sandy beach, outback burgers, a peaceful camp and sunsets good enough for a calendar cover.",
+    url:"https://www.offthemainroad.com.au/latest/wyandra",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a20aec4dbedb812c320005e/1780526788296/IMG_4191.jpg?format=1500w" },
+
+  { name:"Cunnamulla", state:"QLD", lat:-28.0675, lng:145.6839,
+    title:"Cunnamulla: Rails, Races and Hot Springs",
+    excerpt:"An overnight pub camp at Enngonia, then north to Cunnamulla; the Robbers Tree, the All Aboard rail show, a day at the races for Neil and artesian hot springs for Cameron. A weekend well spent.",
+    url:"https://www.offthemainroad.com.au/latest/cunnamulla-2",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a1b70d25c8ba819bdaf29f1/1780183250180/IMG_3706.jpeg?format=1500w" },
+
+  { name:"Bourke", state:"NSW", lat:-30.0920, lng:145.9358,
+    title:"Bourke: Where the Darling Tells the Story",
+    excerpt:"Five rain-soaked days at Nyngan Weir and then north to Bourke, the Darling River's great port, Fred Hollows' resting place, an Afghan mosque in the outback, and a town that rewards anyone who slows down.",
+    url:"https://www.offthemainroad.com.au/latest/bourke",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a1b618f089d1869aaa517c4/1780179343478/IMG_4008.jpg?format=1500w" },
+
+  { name:"Hay", state:"NSW", lat:-34.5100, lng:144.8400,
+    title:"Hay: History on the Murrumbidgee",
+    excerpt:"From Melbourne via Warrnambool and St Arnaud to Hay, a town that keeps earning return visits. Free camping on the Murrumbidgee, a gaol with many lives, and one of regional NSW's most joyful festivals.",
+    url:"https://www.offthemainroad.com.au/latest/hay",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/677dc820029b773470613833/697aa04f83e25f0382b1edeb/1780120213359/IMG_3428.jpeg?format=1500w" },
+
+  { name:"Warrnambool", state:"VIC", lat:-38.3831, lng:142.4872,
+    title:"A Slow Day in Warrnambool",
+    excerpt:"A slow morning in the mist at Warrnambool's historic Botanic Gardens, a drive out to Hopkins Falls running at full strength, and an afternoon browsing Fletcher Jones Market.",
+    url:"https://www.offthemainroad.com.au/latest/a-slow-day-in-warrnambool",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/69b0919d4760651bbaaa7e33/1773179293609/IMG_3559.jpeg?format=1500w" },
+
+  { name:"Winchelsea", state:"VIC", lat:-38.2443, lng:143.9988,
+    title:"Winchelsea: Bluestone, Rabbits, and the Barwon",
+    excerpt:"Two nights on the Barwon River at Winchelsea's free camp, and a guided tour of Barwon Park Mansion, the bluestone homestead built to impress a duke, by the man who gave Australia its rabbit problem.",
+    url:"https://www.offthemainroad.com.au/latest/winchelsea-barwon-mansion",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/677dc820029b773470613833/69c63f66de6bf151f92888ee/1781332364103/IMG_3110.jpg?format=1500w" },
+
+  { name:"Ararat", state:"VIC", lat:-37.2833, lng:142.9167,
+    title:"Ararat: Visiting J Ward",
+    excerpt:"J Ward in Ararat began as a gold rush gaol before becoming Victoria's Criminally Insane Division. A guided tour reveals bluestone cells, preserved gallows, and a confronting chapter in Australia's justice and mental health history.",
+    url:"https://www.offthemainroad.com.au/latest/ararat-j-ward-prison-history-tour",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6997872a8896f80cff40c8b3/1771538218608/IMG_3368.jpg?format=1500w" },
+
+  { name:"Ararat", state:"VIC", lat:-37.2900, lng:142.9200,
+    title:"Ararat: Inside Aradale",
+    excerpt:"Aradale in Ararat is one of Australia's largest former psychiatric hospitals. A guided history tour reveals confronting stories, evolving mental health care, and the complex legacy of an institution that operated for more than a century.",
+    url:"https://www.offthemainroad.com.au/latest/ararat-aradale-history-tour",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6997833046b7fa27bfe876e6/1771537200324/IMG_3327.jpeg?format=1500w" },
+
+  { name:"Queenscliff", state:"VIC", lat:-38.2667, lng:144.6667,
+    title:"Queenscliff: Dining on The Q Train",
+    excerpt:"A moving degustation through Bellarine farmland, The Q Train pairs heritage rail with seriously good food. From steam departures to thoughtful non-alcoholic pairings, it's one of Victoria's most memorable regional dining experiences.",
+    url:"https://www.offthemainroad.com.au/latest/queenscliff-the-q-train-bellarine",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/699648f4f1e922404285c769/1771456756210/IMG_1749.jpeg?format=1500w" },
+
+  { name:"Werribee", state:"VIC", lat:-37.9000, lng:144.6600,
+    title:"Werribee Open Range Zoo: A Safari Near the City",
+    excerpt:"Werribee Open Range Zoo offers a surprisingly immersive safari experience just outside Melbourne. With open savannahs, accessible paths, and thoughtful design, it feels far removed from the city while remaining easy to navigate.",
+    url:"https://www.offthemainroad.com.au/latest/werribee-zoo",
+    img:"http://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6986620f6a1d184ccf950f84/1770414607910/IMG_2681.jpeg?format=1500w" }
+];
+
+/* ── Map setup ── */
+const map = L.map('map', { center: [-25, 134], zoom: 5 });
+
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   maxZoom: 18
 }).addTo(map);
 
-/* ── Cluster group ── */
+/* ── Clusters ── */
 const clusterGroup = L.markerClusterGroup({
   maxClusterRadius: 55,
   iconCreateFunction: function(cluster) {
     const n = cluster.getChildCount();
-    const size = n < 10 ? 36 : n < 50 ? 42 : 48;
+    const size = n < 10 ? 36 : 42;
     return L.divIcon({
-      html: `<div class="otmr-cluster" style="width:${size}px;height:${size}px">${n}</div>`,
-      className: '', iconSize: [size, size], iconAnchor: [size/2, size/2]
+      html: '<div class="otmr-cluster" style="width:' + size + 'px;height:' + size + 'px">' + n + '</div>',
+      className: '',
+      iconSize: [size, size],
+      iconAnchor: [size/2, size/2]
     });
   }
 });
 
 /* ── Pin icon ── */
 function makePin() {
-  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">
-    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.25)"/></filter>
-    <path d="M15 0C6.72 0 0 6.72 0 15c0 10.5 15 23 15 23S30 25.5 30 15C30 6.72 23.28 0 15 0z" fill="${PIN_COLOR}" filter="url(#sh)"/>
-    <circle cx="15" cy="15" r="6" fill="white" opacity="0.9"/>
-  </svg>`;
+  const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">'
+    + '<path d="M15 0C6.72 0 0 6.72 0 15c0 10.5 15 23 15 23S30 25.5 30 15C30 6.72 23.28 0 15 0z" fill="' + PIN_COLOR + '"/>'
+    + '<circle cx="15" cy="15" r="6" fill="white" opacity="0.9"/>'
+    + '</svg>';
   return L.divIcon({ html: svg, className: '', iconSize: [30,38], iconAnchor: [15,38] });
 }
 
-/* ── Markers ── */
-let allMarkers = [];
-destinations.forEach(d => {
-  const marker = L.marker([d.lat, d.lng], { icon: makePin() });
+/* ── Add markers ── */
+destinations.forEach(function(d) {
+  var marker = L.marker([d.lat, d.lng], { icon: makePin() });
   marker.destData = d;
-  marker.on('click', function() { openSidebar(this.destData); });
+  marker.on('click', function() {
+    openSidebar(this.destData);
+  });
   clusterGroup.addLayer(marker);
-  allMarkers.push(marker);
 });
+
 map.addLayer(clusterGroup);
 
-function updateCount(n) {
-  document.getElementById('dest-count').textContent = n + ' article' + (n === 1 ? '' : 's');
-}
-updateCount(destinations.length);
-
 /* ── Sidebar ── */
-const stateNames = {QLD:'Queensland',NSW:'New South Wales',VIC:'Victoria',SA:'South Australia',WA:'Western Australia',NT:'Northern Territory',TAS:'Tasmania'};
-
 function openSidebar(d) {
-  document.getElementById('sb-tag').textContent = d.state;
-  document.getElementById('sb-tag').style.cssText = `background:${PIN_COLOR}22;color:${PIN_COLOR};border:1px solid ${PIN_COLOR}55`;
+  var tag = document.getElementById('sb-tag');
+  tag.textContent = d.state;
+  tag.style.background = PIN_COLOR + '22';
+  tag.style.color = PIN_COLOR;
+  tag.style.border = '1px solid ' + PIN_COLOR + '55';
+
   document.getElementById('sb-title').textContent = d.title || d.name;
-  document.getElementById('sb-state-line').textContent = d.name + ' · ' + (stateNames[d.state] || d.state);
+  document.getElementById('sb-location').textContent = d.name + ' · ' + (STATE_NAMES[d.state] || d.state);
   document.getElementById('sb-excerpt').textContent = d.excerpt;
   document.getElementById('sb-btn').href = d.url;
 
-  const img = document.getElementById('sb-img');
-  const ph  = document.getElementById('sb-img-placeholder');
+  var img = document.getElementById('sb-img');
+  var ph = document.getElementById('sb-placeholder');
+
   if (d.img) {
-    img.src = d.img; img.alt = d.title || d.name;
-    img.style.display = 'block'; ph.style.display = 'none';
+    img.src = d.img;
+    img.alt = d.title || d.name;
+    img.style.display = 'block';
+    ph.style.display = 'none';
   } else {
-    img.style.display = 'none'; ph.style.display = 'flex';
+    img.style.display = 'none';
+    ph.style.display = 'flex';
   }
+
   document.getElementById('sidebar').classList.add('open');
 }
 
-window.closeSidebar = function() {
+function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
-};
+}
 
-map.on('click', function() { window.closeSidebar(); });
-
-/* ── State filter ── */
-window.filterState = function(state) {
-  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-  document.querySelector('[data-state="' + state + '"]').classList.add('active');
-  window.closeSidebar();
-  clusterGroup.clearLayers();
-  const filtered = state === 'ALL' ? allMarkers : allMarkers.filter(m => m.destData.state === state);
-  filtered.forEach(m => clusterGroup.addLayer(m));
-  updateCount(filtered.length);
-  if (filtered.length > 0 && state !== 'ALL') {
-    map.fitBounds(L.latLngBounds(filtered.map(m => m.getLatLng())), { padding: [60,60] });
-  } else {
-    map.setView([-26, 134], 4);
-  }
-};
-
-} // end initMap
+map.on('click', function() { closeSidebar(); });
 
 </script>
 </body>
