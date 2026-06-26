@@ -1,4 +1,8 @@
-[
+[{ name:"Wyandra", state:"QLD", lat:-27.2167, lng:145.9833,
+  title:"Wyandra Queensland: Free Camping on the Warrego River",
+  excerpt:"Stop at Wyandra halfway between Cunnamulla and Charleville. Free camping, outback burgers at the post office, a river beach and some of outback Queensland's best sunsets.",
+  url:"https://www.offthemainroad.com.au/latest/wyandra",
+  img:"https://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a20aec4dbedb812c320005e/1780526788296/IMG_4191.jpg?format=1500w" },
   {
     "name": "Boulia",
     "state": "QLD",
