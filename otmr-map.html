@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Off the Main Road — Destination Map</title>
+
+<link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.css"/>
+<link rel="stylesheet" href="https://unpkg.com/leaflet.markercluster@1.5.3/dist/MarkerCluster.Default.css"/>
+<link rel="preconnect" href="https://fonts.googleapis.com"/>
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&display=swap" rel="stylesheet"/>
+
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: #f5f2ee;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+  }
+
+  /* ── Header ── */
+  #header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 20px;
+    height: 52px;
+    background: #fff;
+    border-bottom: 1px solid #e8e4de;
+    flex-shrink: 0;
+    z-index: 1000;
+  }
+
+  #header .logo {
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: #2c2a26;
+  }
+
+  #header .logo span {
+    color: #61856F;
+  }
+
+  #header .count {
+    font-size: 12px;
+    color: #8a8278;
+  }
+
+  /* ── Main layout ── */
+  #app {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* ── Map ── */
+  #map {
+    flex: 1;
+    z-index: 1;
+  }
+
+  /* Leaflet tile credit */
+  .leaflet-control-attribution {
+    font-size: 10px !important;
+  }
+
+  /* Custom cluster style */
+  .otmr-cluster {
+    background: #61856F;
+    border: 3px solid #fff;
+    border-radius: 50%;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.25);
+    transition: transform 0.15s ease;
+  }
+
+  .otmr-cluster:hover { transform: scale(1.1); }
+
+  /* ── Sidebar ── */
+  #sidebar {
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 300px;
+    height: 100%;
+    background: #fff;
+    border-left: 1px solid #e8e4de;
+    display: flex;
+    flex-direction: column;
+    z-index: 500;
+    transform: translateX(100%);
+    transition: transform 0.28s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: -4px 0 20px rgba(0,0,0,0.08);
+  }
+
+  #sidebar.open {
+    transform: translateX(0);
+  }
+
+  /* Sidebar image */
+  #sb-img-wrap {
+    position: relative;
+    height: 180px;
+    background: #f0ece6;
+    flex-shrink: 0;
+    overflow: hidden;
+  }
+
+  #sb-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+  }
+
+  #sb-img-placeholder {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #f0ece6;
+  }
+
+  #sb-img-placeholder svg {
+    opacity: 0.35;
+  }
+
+  /* Close button */
+  #sb-close {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: rgba(0,0,0,0.5);
+    border: none;
+    cursor: pointer;
+    color: #fff;
+    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    line-height: 1;
+    transition: background 0.15s;
+    z-index: 10;
+  }
+
+  #sb-close:hover { background: rgba(0,0,0,0.75); }
+
+  /* Sidebar body */
+  #sb-body {
+    padding: 18px;
+    flex: 1;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+  }
+
+  #sb-tag {
+    display: inline-block;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 0.07em;
+    text-transform: uppercase;
+    padding: 3px 10px;
+    border-radius: 20px;
+    align-self: flex-start;
+  }
+
+  #sb-title {
+    font-size: 18px;
+    font-weight: 600;
+    color: #2c2a26;
+    line-height: 1.25;
+  }
+
+  #sb-state-line {
+    font-size: 12px;
+    color: #8a8278;
+    margin-top: -6px;
+  }
+
+  #sb-excerpt {
+    font-size: 13px;
+    color: #5a5650;
+    line-height: 1.65;
+    flex: 1;
+  }
+
+  #sb-btn {
+    display: block;
+    text-align: center;
+    padding: 11px 16px;
+    background: #2c2a26;
+    color: #fff;
+    border-radius: 6px;
+    font-size: 13px;
+    font-weight: 500;
+    text-decoration: none;
+    letter-spacing: 0.02em;
+    transition: background 0.15s;
+    margin-top: auto;
+  }
+
+  #sb-btn:hover { background: #61856F; }
+
+
+
+  /* ── Filter bar ── */
+  #filters {
+    position: absolute;
+    top: 12px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 500;
+    display: flex;
+    gap: 6px;
+    background: #fff;
+    padding: 6px;
+    border-radius: 30px;
+    border: 1px solid #e8e4de;
+    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+  }
+
+  .filter-btn {
+    padding: 5px 14px;
+    border-radius: 20px;
+    border: none;
+    background: transparent;
+    font-family: 'Inter', sans-serif;
+    font-size: 12px;
+    font-weight: 500;
+    color: #5a5650;
+    cursor: pointer;
+    transition: background 0.15s, color 0.15s;
+    white-space: nowrap;
+  }
+
+  .filter-btn:hover { background: #f5f2ee; }
+
+  .filter-btn.active {
+    background: #61856F;
+    color: #fff;
+  }
+</style>
+</head>
+<body>
+
+<div id="header">
+  <div class="logo">Off the <span>Main Road</span></div>
+  <div class="count" id="dest-count"></div>
+</div>
+
+<div id="app">
+
+  <div id="map"></div>
+
+  <!-- Filter bar -->
+  <div id="filters">
+    <button class="filter-btn active" data-state="ALL" onclick="filterState('ALL')">All</button>
+    <button class="filter-btn" data-state="QLD" onclick="filterState('QLD')">QLD</button>
+    <button class="filter-btn" data-state="NSW" onclick="filterState('NSW')">NSW</button>
+    <button class="filter-btn" data-state="VIC" onclick="filterState('VIC')">VIC</button>
+    <button class="filter-btn" data-state="SA" onclick="filterState('SA')">SA</button>
+    <button class="filter-btn" data-state="WA" onclick="filterState('WA')">WA</button>
+    <button class="filter-btn" data-state="NT" onclick="filterState('NT')">NT</button>
+    <button class="filter-btn" data-state="TAS" onclick="filterState('TAS')">TAS</button>
+  </div>
+
+  <!-- Sidebar -->
+  <div id="sidebar">
+    <div id="sb-img-wrap">
+      <div id="sb-img-placeholder">
+        <svg width="48" height="48" viewBox="0 0 24 24" fill="none" stroke="#2c2a26" stroke-width="1.2">
+          <rect x="3" y="3" width="18" height="18" rx="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+      </div>
+      <img id="sb-img" src="" alt="" style="display:none; position:absolute; top:0; left:0;"/>
+      <button id="sb-close" onclick="closeSidebar()" aria-label="Close">&#x2715;</button>
+    </div>
+    <div id="sb-body">
+      <span id="sb-tag"></span>
+      <p id="sb-title"></p>
+      <p id="sb-state-line"></p>
+      <p id="sb-excerpt"></p>
+      <a id="sb-btn" href="#" target="_blank">Read the article &rarr;</a>
+    </div>
+  </div>
+
+
+
+</div>
+
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+<script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
+<script>
+
+/* ── Destination data ──────────────────────────────────────────
+   Loaded from destinations.json in the same folder.
+   To add a new article, add an entry to destinations.json:
+   {
+     "name":    "Town name",
+     "state":   "QLD",
+     "lat":     -23.44,
+     "lng":     144.25,
+     "title":   "Full article headline",
+     "excerpt": "The meta description from the post.",
+     "url":     "https://www.offthemainroad.com.au/latest/your-slug",
+     "img":     "https://static1.squarespace.com/..."
+   }
+──────────────────────────────────────────────────────────────── */
+let destinations = [];
+
+async function loadDestinations() {
+  try {
+    const res = await fetch('destinations.json');
+    destinations = await res.json();
+  } catch(e) {
+    console.warn('Could not load destinations.json — using empty set.', e);
+    destinations = [];
+  }
+  initMap();
+}
+
+loadDestinations();
+
+const PIN_COLOR = "#61856F";
+
+function initMap() {
+
+/* ── Map ── */
+const map = L.map('map', { center: [-27.5, 134], zoom: 5 });
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+  maxZoom: 18
+}).addTo(map);
+
+/* ── Cluster group ── */
+const clusterGroup = L.markerClusterGroup({
+  maxClusterRadius: 55,
+  iconCreateFunction: function(cluster) {
+    const n = cluster.getChildCount();
+    const size = n < 10 ? 36 : n < 50 ? 42 : 48;
+    return L.divIcon({
+      html: `<div class="otmr-cluster" style="width:${size}px;height:${size}px">${n}</div>`,
+      className: '', iconSize: [size, size], iconAnchor: [size/2, size/2]
+    });
+  }
+});
+
+/* ── Pin icon ── */
+function makePin() {
+  const svg = `<svg xmlns="http://www.w3.org/2000/svg" width="30" height="38" viewBox="0 0 30 38">
+    <filter id="sh"><feDropShadow dx="0" dy="2" stdDeviation="2" flood-color="rgba(0,0,0,0.25)"/></filter>
+    <path d="M15 0C6.72 0 0 6.72 0 15c0 10.5 15 23 15 23S30 25.5 30 15C30 6.72 23.28 0 15 0z" fill="${PIN_COLOR}" filter="url(#sh)"/>
+    <circle cx="15" cy="15" r="6" fill="white" opacity="0.9"/>
+  </svg>`;
+  return L.divIcon({ html: svg, className: '', iconSize: [30,38], iconAnchor: [15,38] });
+}
+
+/* ── Markers ── */
+let allMarkers = [];
+destinations.forEach(d => {
+  const marker = L.marker([d.lat, d.lng], { icon: makePin() });
+  marker.destData = d;
+  marker.on('click', function() { openSidebar(this.destData); });
+  clusterGroup.addLayer(marker);
+  allMarkers.push(marker);
+});
+map.addLayer(clusterGroup);
+
+function updateCount(n) {
+  document.getElementById('dest-count').textContent = n + ' article' + (n === 1 ? '' : 's');
+}
+updateCount(destinations.length);
+
+/* ── Sidebar ── */
+const stateNames = {QLD:'Queensland',NSW:'New South Wales',VIC:'Victoria',SA:'South Australia',WA:'Western Australia',NT:'Northern Territory',TAS:'Tasmania'};
+
+function openSidebar(d) {
+  document.getElementById('sb-tag').textContent = d.state;
+  document.getElementById('sb-tag').style.cssText = `background:${PIN_COLOR}22;color:${PIN_COLOR};border:1px solid ${PIN_COLOR}55`;
+  document.getElementById('sb-title').textContent = d.title || d.name;
+  document.getElementById('sb-state-line').textContent = d.name + ' · ' + (stateNames[d.state] || d.state);
+  document.getElementById('sb-excerpt').textContent = d.excerpt;
+  document.getElementById('sb-btn').href = d.url;
+
+  const img = document.getElementById('sb-img');
+  const ph  = document.getElementById('sb-img-placeholder');
+  if (d.img) {
+    img.src = d.img; img.alt = d.title || d.name;
+    img.style.display = 'block'; ph.style.display = 'none';
+  } else {
+    img.style.display = 'none'; ph.style.display = 'flex';
+  }
+  document.getElementById('sidebar').classList.add('open');
+}
+
+window.closeSidebar = function() {
+  document.getElementById('sidebar').classList.remove('open');
+};
+
+map.on('click', function() { window.closeSidebar(); });
+
+/* ── State filter ── */
+window.filterState = function(state) {
+  document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+  document.querySelector('[data-state="' + state + '"]').classList.add('active');
+  window.closeSidebar();
+  clusterGroup.clearLayers();
+  const filtered = state === 'ALL' ? allMarkers : allMarkers.filter(m => m.destData.state === state);
+  filtered.forEach(m => clusterGroup.addLayer(m));
+  updateCount(filtered.length);
+  if (filtered.length > 0 && state !== 'ALL') {
+    map.fitBounds(L.latLngBounds(filtered.map(m => m.getLatLng())), { padding: [60,60] });
+  } else {
+    map.setView([-27.5, 134], 5);
+  }
+};
+
+} // end initMap
+
+</script>
+</body>
+</html>
