@@ -24,35 +24,7 @@
     overflow: hidden;
   }
 
-  /* ── Header ── */
-  #header {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    padding: 0 20px;
-    height: 52px;
-    background: #fff;
-    border-bottom: 1px solid #e8e4de;
-    flex-shrink: 0;
-    z-index: 1000;
-  }
 
-  #header .logo {
-    font-size: 13px;
-    font-weight: 600;
-    letter-spacing: 0.08em;
-    text-transform: uppercase;
-    color: #2c2a26;
-  }
-
-  #header .logo span {
-    color: #61856F;
-  }
-
-  #header .count {
-    font-size: 12px;
-    color: #8a8278;
-  }
 
   /* ── Main layout ── */
   #app {
@@ -224,66 +196,18 @@
 
 
 
-  /* ── Filter bar ── */
-  #filters {
-    position: absolute;
-    top: 12px;
-    left: 50%;
-    transform: translateX(-50%);
-    z-index: 500;
-    display: flex;
-    gap: 6px;
-    background: #fff;
-    padding: 6px;
-    border-radius: 30px;
-    border: 1px solid #e8e4de;
-    box-shadow: 0 2px 12px rgba(0,0,0,0.1);
-  }
 
-  .filter-btn {
-    padding: 5px 14px;
-    border-radius: 20px;
-    border: none;
-    background: transparent;
-    font-family: 'Inter', sans-serif;
-    font-size: 12px;
-    font-weight: 500;
-    color: #5a5650;
-    cursor: pointer;
-    transition: background 0.15s, color 0.15s;
-    white-space: nowrap;
-  }
-
-  .filter-btn:hover { background: #f5f2ee; }
-
-  .filter-btn.active {
-    background: #61856F;
-    color: #fff;
-  }
 </style>
 </head>
 <body>
 
-<div id="header">
-  <div class="logo">Off the <span>Main Road</span></div>
-  <div class="count" id="dest-count"></div>
-</div>
+
 
 <div id="app">
 
   <div id="map"></div>
 
-  <!-- Filter bar -->
-  <div id="filters">
-    <button class="filter-btn active" data-state="ALL" onclick="filterState('ALL')">All</button>
-    <button class="filter-btn" data-state="QLD" onclick="filterState('QLD')">QLD</button>
-    <button class="filter-btn" data-state="NSW" onclick="filterState('NSW')">NSW</button>
-    <button class="filter-btn" data-state="VIC" onclick="filterState('VIC')">VIC</button>
-    <button class="filter-btn" data-state="SA" onclick="filterState('SA')">SA</button>
-    <button class="filter-btn" data-state="WA" onclick="filterState('WA')">WA</button>
-    <button class="filter-btn" data-state="NT" onclick="filterState('NT')">NT</button>
-    <button class="filter-btn" data-state="TAS" onclick="filterState('TAS')">TAS</button>
-  </div>
+
 
   <!-- Sidebar -->
   <div id="sidebar">
@@ -349,7 +273,7 @@ const PIN_COLOR = "#61856F";
 function initMap() {
 
 /* ── Map ── */
-const map = L.map('map', { center: [-27.5, 134], zoom: 5 });
+const map = L.map('map', { center: [-26, 134], zoom: 4 });
 L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
   attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
   maxZoom: 18
@@ -434,7 +358,7 @@ window.filterState = function(state) {
   if (filtered.length > 0 && state !== 'ALL') {
     map.fitBounds(L.latLngBounds(filtered.map(m => m.getLatLng())), { padding: [60,60] });
   } else {
-    map.setView([-27.5, 134], 5);
+    map.setView([-26, 134], 4);
   }
 };
 
