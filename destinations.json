@@ -1,4 +1,39 @@
-[
+[{ name:"Longreach", state:"QLD", lat:-23.4450, lng:144.2600,
+  title:"Longreach: Rail, River and a Town That Waves Back",
+  excerpt:"Back in Longreach for our third visit. Outback rail adventures, a sunset cruise on the Thomson River, the Longreach Races, new Akubras, and the friendliest welcome yet.",
+  url:"https://www.offthemainroad.com.au/latest/longreach-3",
+  img:"https://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a3091b7dbedb812c32b5bf9/1781567927777/Longreach_10.jpg?format=1500w" },
+
+{ name:"Blackall", state:"QLD", lat:-24.4247, lng:145.4680,
+  title:"Blackall Queensland: Steam, Wool and Jackie Howe",
+  excerpt:"Visit the Blackall Historical Woolscour, Australia's only surviving steam-powered woolscour. Add the Jackie Howe shearing record statue and free camping on the Barcoo River.",
+  url:"https://www.offthemainroad.com.au/latest/blackall",
+  img:"https://static1.squarespace.com/static/677db4b4e547f661c8b7284f/677dc820029b773470613833/6a20c024354bc75359724f91/1781470875257/IMG_3886.jpeg?format=1500w" },
+
+{ name:"Tambo", state:"QLD", lat:-24.8844, lng:146.2558,
+  title:"Tambo Queensland: Tambo Teddies, Chicken Races and the Qantas Crash",
+  excerpt:"Visit Tambo, QLD! Pick your Tambo Teddy, watch the chicken races, and find the site of Qantas's first crash in 1927. Free camping at Stubby Bend on the Barcoo River.",
+  url:"https://www.offthemainroad.com.au/latest/tambo-1",
+  img:"https://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a23fb6b71545e6381c7e56c/1780743019527/IMG_3870.jpg?format=1500w" },
+
+{ name:"Charleville", state:"QLD", lat:-26.4032, lng:146.2413,
+  title:"Charleville Hidden Gems: Explosion Site, Airfield Museum and More",
+  excerpt:"Four visits to Charleville and still finding new things — the Angellala Creek explosion site, the Airfield Museum, the Bureau of Meteorology weather balloon and the WWII quarry that built the airport runways.",
+  url:"https://www.offthemainroad.com.au/latest/charleville-3",
+  img:"https://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a21462a9d129d02efd45d12/1780565546968/IMG_4296.jpg?format=1500w" },
+  
+  { name:"Boulia", state:"QLD", lat:-22.9047, lng:139.9061,
+  title:"Boulia Queensland: Min Min Lights, Channel Country and the Road Out West",
+  excerpt:"Drive the Kennedy Development Road to Boulia QLD: Explore the Min Min Encounter, Stone House Museum, and free camping at Dajarra Dam on the way to Mount Isa.",
+  url:"https://www.offthemainroad.com.au/latest/boulia",
+  img:"https://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a3c5cc7774b644a07a243f0/1782340807179/Boulia_31.jpg?format=1500w" },
+
+{ name:"Longreach", state:"QLD", lat:-23.4392, lng:144.2510,
+  title:"Things to Do in Longreach: Our Favourites",
+  excerpt:"Our favourite things to do in Longreach! The Qantas Founders Museum, Stockman's Hall of Fame, outback rail and river tours, Smithy's show.",
+  url:"https://www.offthemainroad.com.au/latest/things-to-do-in-longreach",
+  img:"https://static1.squarespace.com/static/677db4b4e547f661c8b7284f/t/6a3622ffbbaef61d5bb3e238/1781932799038/THings+to+do+in+longreach+social+cover.jpg?format=1500w" },
+  
   { name:"Wyandra", state:"QLD", lat:-27.2167, lng:145.9833,
   title:"Wyandra Queensland: Free Camping on the Warrego River",
   excerpt:"Stop at Wyandra halfway between Cunnamulla and Charleville. Free camping, outback burgers at the post office, a river beach and some of outback Queensland's best sunsets.",
