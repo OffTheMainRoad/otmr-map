@@ -154,6 +154,37 @@ body {
 }
 
 #sb-btn:hover { background: #4a6657; }
+ 
+#sb-nearby {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+.nearby-chip {
+  font-size: 11px;
+  font-weight: 500;
+  color: #61856F;
+  background: #f0f5f2;
+  border: 1px solid #c8dbd0;
+  border-radius: 20px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.nearby-chip:hover {
+  background: #61856F;
+  color: #fff;
+  border-color: #61856F;
+}
+.nearby-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #aaa49e;
+}
 
 .leaflet-control-attribution { font-size: 10px !important; }
 </style>
@@ -179,6 +210,7 @@ body {
     <p id="sb-title"></p>
     <p id="sb-location"></p>
     <p id="sb-excerpt"></p>
+    <div id="sb-nearby"></div> 
     <a id="sb-btn" href="#" target="_blank">Read the full story &rarr;</a>
   </div>
 </div>
@@ -382,6 +414,17 @@ map.addLayer(clusterGroup);
 
 /* ── Sidebar ── */
 function openSidebar(d) {
+  function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
+
+function openSidebar(d, index) {
   var tag = document.getElementById('sb-tag');
   tag.textContent = d.state;
   tag.style.background = PIN_COLOR + '22';
@@ -404,6 +447,36 @@ function openSidebar(d) {
   } else {
     img.style.display = 'none';
     ph.style.display = 'flex';
+  }
+  // --- nearby tags ---
+  const nearbyContainer = document.getElementById('sb-nearby');
+  nearbyContainer.innerHTML = '';
+
+  const others = destinations
+    .map((other, i) => ({ other, i, km: haversineKm(d.lat, d.lng, other.lat, other.lng) }))
+    .filter(x => x.i !== index && x.other.name !== d.name)
+    .sort((a, b) => a.km - b.km)
+    .slice(0, 4);
+
+  if (others.length) {
+    const label = document.createElement('p');
+    label.className = 'nearby-label';
+    label.textContent = "Nearby on the map";
+    nearbyContainer.appendChild(label);
+
+    const chipRow = document.createElement('div');
+    chipRow.style.display = 'flex';
+    chipRow.style.flexWrap = 'wrap';
+    chipRow.style.gap = '6px';
+
+    others.forEach(({ other, i, km }) => {
+      const chip = document.createElement('button');
+      chip.className = 'nearby-chip';
+      chip.textContent = other.name + ' · ' + Math.round(km) + ' km';
+      chip.onclick = () => openSidebar(other, i);
+      chipRow.appendChild(chip);
+    });
+    nearbyContainer.appendChild(chipRow);
   }
 
   document.getElementById('sidebar').classList.add('open');
