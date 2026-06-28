@@ -139,7 +139,10 @@ body {
   line-height: 1.65;
   flex: 1;
 }
-
+<p id="sb-excerpt"></p>
+<div id="sb-nearby"></div>          <!-- ADD THIS LINE -->
+<a id="sb-btn" href="#" target="_blank">Read the article &rarr;</a>
+  
 #sb-btn {
   display: block;
   text-align: center;
@@ -154,6 +157,37 @@ body {
 }
 
 #sb-btn:hover { background: #4a6657; }
+
+  #sb-nearby {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding-top: 4px;
+}
+.nearby-chip {
+  font-size: 11px;
+  font-weight: 500;
+  color: #61856F;
+  background: #f0f5f2;
+  border: 1px solid #c8dbd0;
+  border-radius: 20px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+.nearby-chip:hover {
+  background: #61856F;
+  color: #fff;
+  border-color: #61856F;
+}
+.nearby-label {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: #aaa49e;
+}
 
 .leaflet-control-attribution { font-size: 10px !important; }
 </style>
@@ -381,29 +415,78 @@ destinations.forEach(function(d) {
 map.addLayer(clusterGroup);
 
 /* ── Sidebar ── */
-function openSidebar(d) {
-  var tag = document.getElementById('sb-tag');
-  tag.textContent = d.state;
-  tag.style.background = PIN_COLOR + '22';
-  tag.style.color = PIN_COLOR;
-  tag.style.border = '1px solid ' + PIN_COLOR + '55';
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371;
+  const dLat = (lat2 - lat1) * Math.PI / 180;
+  const dLng = (lng2 - lng1) * Math.PI / 180;
+  const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
+            Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) *
+            Math.sin(dLng/2) * Math.sin(dLng/2);
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+}
 
-  document.getElementById('sb-title').textContent = d.title || d.name;
+function openSidebar(d, index) {
+  // --- existing fields ---
+  const img = document.getElementById('sb-img');
+  const placeholder = document.getElementById('sb-placeholder');
+  if (d.img) {
+    img.src = d.img;
+    img.style.display = 'block';
+    placeholder.style.display = 'none';
+  } else {
+    img.style.display = 'none';
+    placeholder.style.display = 'flex';
+  }
+
+  const tag = document.getElementById('sb-tag');
+  tag.textContent = d.state;
+  const stateColors = {
+    QLD: { bg:'#fff3e0', color:'#e65100' },
+    SA:  { bg:'#e8f5e9', color:'#2e7d32' },
+    NSW: { bg:'#e3f2fd', color:'#1565c0' },
+    VIC: { bg:'#f3e5f5', color:'#6a1b9a' },
+    NT:  { bg:'#fce4ec', color:'#880e4f' },
+    WA:  { bg:'#fff8e1', color:'#f57f17' },
+    TAS: { bg:'#e0f7fa', color:'#00695c' },
+  };
+  const sc = stateColors[d.state] || { bg:'#f0ece6', color:'#5a5650' };
+  tag.style.background = sc.bg;
+  tag.style.color = sc.color;
+
+  document.getElementById('sb-title').textContent = d.title;
   document.getElementById('sb-location').textContent = d.name + ' · ' + (STATE_NAMES[d.state] || d.state);
   document.getElementById('sb-excerpt').textContent = d.excerpt;
   document.getElementById('sb-btn').href = d.url;
 
-  var img = document.getElementById('sb-img');
-  var ph = document.getElementById('sb-placeholder');
+  // --- nearby tags ---
+  const nearbyContainer = document.getElementById('sb-nearby');
+  nearbyContainer.innerHTML = '';
 
-  if (d.img) {
-    img.src = d.img;
-    img.alt = d.title || d.name;
-    img.style.display = 'block';
-    ph.style.display = 'none';
-  } else {
-    img.style.display = 'none';
-    ph.style.display = 'flex';
+  const others = destinations
+    .map((other, i) => ({ other, i, km: haversineKm(d.lat, d.lng, other.lat, other.lng) }))
+    .filter(x => x.i !== index && x.other.name !== d.name)
+    .sort((a, b) => a.km - b.km)
+    .slice(0, 4);
+
+  if (others.length) {
+    const label = document.createElement('p');
+    label.className = 'nearby-label';
+    label.textContent = "Nearby on the map";
+    nearbyContainer.appendChild(label);
+
+    const chipRow = document.createElement('div');
+    chipRow.style.display = 'flex';
+    chipRow.style.flexWrap = 'wrap';
+    chipRow.style.gap = '6px';
+
+    others.forEach(({ other, i, km }) => {
+      const chip = document.createElement('button');
+      chip.className = 'nearby-chip';
+      chip.textContent = other.name + ' · ' + Math.round(km) + ' km';
+      chip.onclick = () => openSidebar(other, i);
+      chipRow.appendChild(chip);
+    });
+    nearbyContainer.appendChild(chipRow);
   }
 
   document.getElementById('sidebar').classList.add('open');
