@@ -488,6 +488,8 @@ function openSidebar(d) {
   document.getElementById('sb-location').textContent = d.name + ' · ' + (STATE_NAMES[d.state] || d.state);
   document.getElementById('sb-excerpt').textContent = d.excerpt;
   document.getElementById('sb-btn').href = d.url;
+  document.getElementById('sb-body-wrap').classList.remove('scrolled-to-bottom');
+document.getElementById('sb-body').scrollTop = 0;
   var img = document.getElementById('sb-img');
   var ph = document.getElementById('sb-placeholder');
   if (d.img) {
@@ -522,6 +524,12 @@ function closeSidebar() {
 }
 
 map.on('click', function() { closeSidebar(); });
+  document.getElementById('sb-body').addEventListener('scroll', function() {
+  var el = this;
+  var wrap = document.getElementById('sb-body-wrap');
+  var atBottom = el.scrollHeight - el.scrollTop - el.clientHeight < 10;
+  wrap.classList.toggle('scrolled-to-bottom', atBottom);
+});
 </script>
 </body>
 </html>
