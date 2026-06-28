@@ -387,21 +387,20 @@ destinations.forEach(function(d) {
 map.addLayer(clusterGroup);
 
 /* ── Sidebar ── */
+function haversineKm(lat1,lng1,lat2,lng2){var R=6371,dL=(lat2-lat1)*Math.PI/180,dG=(lng2-lng1)*Math.PI/180,a=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)*Math.sin(dG/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+
 function openSidebar(d) {
   var tag = document.getElementById('sb-tag');
   tag.textContent = d.state;
   tag.style.background = PIN_COLOR + '22';
   tag.style.color = PIN_COLOR;
   tag.style.border = '1px solid ' + PIN_COLOR + '55';
-
   document.getElementById('sb-title').textContent = d.title || d.name;
   document.getElementById('sb-location').textContent = d.name + ' · ' + (STATE_NAMES[d.state] || d.state);
   document.getElementById('sb-excerpt').textContent = d.excerpt;
   document.getElementById('sb-btn').href = d.url;
-
   var img = document.getElementById('sb-img');
   var ph = document.getElementById('sb-placeholder');
-
   if (d.img) {
     img.src = d.img;
     img.alt = d.title || d.name;
@@ -411,23 +410,18 @@ function openSidebar(d) {
     img.style.display = 'none';
     ph.style.display = 'flex';
   }
-
+  var nb = document.getElementById('sb-nearby');
+  nb.innerHTML = '';
+  var others = destinations.map(function(o,i){return{o:o,i:i,km:haversineKm(d.lat,d.lng,o.lat,o.lng)};}).filter(function(x){return x.o.name!==d.name;}).sort(function(a,b){return a.km-b.km;}).slice(0,4);
+  if(others.length){var lbl=document.createElement('p');lbl.className='nearby-label';lbl.textContent='Nearby on the map';nb.appendChild(lbl);others.forEach(function(x){var c=document.createElement('button');c.className='nearby-chip';c.textContent=x.o.name+' · '+Math.round(x.km)+'km';c.onclick=function(){openSidebar(x.o);};nb.appendChild(c);});}
   document.getElementById('sidebar').classList.add('open');
 }
 
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
-function haversineKm(lat1,lng1,lat2,lng2){var R=6371,dL=(lat2-lat1)*Math.PI/180,dG=(lng2-lng1)*Math.PI/180,a=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)*Math.sin(dG/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
-
-var nb=document.getElementById('sb-nearby');
-nb.innerHTML='';
-var others=destinations.map(function(o,i){return{o:o,i:i,km:haversineKm(d.lat,d.lng,o.lat,o.lng)};}).filter(function(x){return x.o.name!==d.name;}).sort(function(a,b){return a.km-b.km;}).slice(0,4);
-if(others.length){var lbl=document.createElement('p');lbl.className='nearby-label';lbl.textContent='Nearby on the map';nb.appendChild(lbl);others.forEach(function(x){var c=document.createElement('button');c.className='nearby-chip';c.textContent=x.o.name+' · '+Math.round(x.km)+'km';c.onclick=function(){openSidebar(x.o);};nb.appendChild(c);});}
-
 }
 
 map.on('click', function() { closeSidebar(); });
-
 </script>
 </body>
 </html>
