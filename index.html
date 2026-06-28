@@ -111,7 +111,6 @@ body {
   display: flex;
   flex-direction: column;
   gap: 10px;
-  justify-content: space-between;
 }
 
 #sb-tag {
@@ -141,6 +140,7 @@ body {
   font-size: 13px;
   color: #5a5650;
   line-height: 1.65;
+  flex: 1;
 }
 
 #sb-btn {
@@ -159,7 +159,19 @@ body {
 #sb-btn:hover { background: #4a6657; }
 
   #sb-nearby { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
-.nearby-chip { font-size: 11px; font-weight: 500; color: #61856F; background: #f0f5f2; border: 1px solid #c8dbd0; border-radius: 20px; padding: 4px 10px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.nearby-chip {
+  font-size: 11px;
+  font-weight: 500;
+  color: #61856F;
+  background: #f0f5f2;
+  border: 1px solid #c8dbd0;
+  border-radius: 20px;
+  padding: 4px 10px;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+  text-align: left;
+  width: 100%;}
 .nearby-chip:hover { background: #61856F; color: #fff; border-color: #61856F; }
 .nearby-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #aaa49e; }
 
