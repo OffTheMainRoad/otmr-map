@@ -474,14 +474,14 @@ function openSidebar(d) {
 var seen = {};
 var others = destinations
   .map(function(o,i){return{o:o,i:i,km:haversineKm(d.lat,d.lng,o.lat,o.lng)};})
-  .filter(function(x){ 
-    if(x.o.name === d.name) return false;
+  .filter(function(x){return x.o.name !== d.name;})
+  .sort(function(a,b){return a.km-b.km;})
+  .filter(function(x){
     if(seen[x.o.name]) return false;
     seen[x.o.name] = true;
     return true;
   })
-  .sort(function(a,b){return a.km-b.km;})
-  .slice(0,4);;
+  .slice(0,4);
   if(others.length){var lbl=document.createElement('p');lbl.className='nearby-label';lbl.textContent='Nearby stories on the map';nb.appendChild(lbl);others.forEach(function(x){var c=document.createElement('button');c.className='nearby-chip';c.textContent=x.o.name+' · '+Math.round(x.km)+'km';c.onclick=function(){openSidebar(x.o);};nb.appendChild(c);});}
   document.getElementById('sidebar').classList.add('open');
 }
