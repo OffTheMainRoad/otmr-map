@@ -113,6 +113,7 @@ body {
   gap: 10px;
 }
 
+  
 #sb-tag {
   display: inline-block;
   font-size: 10px;
@@ -146,14 +147,16 @@ body {
 #sb-btn {
   display: block;
   text-align: center;
-  padding: 11px 16px;
+  padding: 14px 16px;
   background: #61856F;
   color: #fff;
-  border-radius: 6px;
   font-size: 13px;
   font-weight: 500;
   text-decoration: none;
   transition: background 0.15s;
+  flex-shrink: 0;
+  margin: 0 18px 18px 18px;
+  border-radius: 6px;
 }
 
 #sb-btn:hover { background: #4a6657; }
@@ -193,19 +196,22 @@ body {
     </div>
     <button id="sb-close" onclick="closeSidebar()">&#x2715;</button>
   </div>
-  <div id="sb-body">
-    <span id="sb-tag"></span>
-    <p id="sb-title"></p>
-    <p id="sb-location"></p>
-    <p id="sb-excerpt"></p>
-    <div id="sb-nearby"></div>
-    <a id="sb-btn" href="#" target="_blank">Read the full story &rarr;</a>
+ <div id="sb-body">
+  <span id="sb-tag"></span>
+  <p id="sb-title"></p>
+  <p id="sb-location"></p>
+  <p id="sb-excerpt"></p>
+  <div id="sb-nearby"></div>
+</div>
+<a id="sb-btn" href="#" target="_blank">Read the full story &rarr;</a>
   </div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 <script>
+
+  
 
 const PIN_COLOR = "#61856F";
 
@@ -485,6 +491,7 @@ var others = destinations
   if(others.length){var lbl=document.createElement('p');lbl.className='nearby-label';lbl.textContent='Nearby stories on the map';nb.appendChild(lbl);others.forEach(function(x){var c=document.createElement('button');c.className='nearby-chip';c.textContent=x.o.name+' · '+Math.round(x.km)+'km';c.onclick=function(){openSidebar(x.o);};nb.appendChild(c);});}
   document.getElementById('sidebar').classList.add('open');
 }
+  
 
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
