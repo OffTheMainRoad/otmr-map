@@ -155,6 +155,11 @@ body {
 
 #sb-btn:hover { background: #4a6657; }
 
+  #sb-nearby { display: flex; flex-wrap: wrap; gap: 6px; padding-top: 4px; }
+.nearby-chip { font-size: 11px; font-weight: 500; color: #61856F; background: #f0f5f2; border: 1px solid #c8dbd0; border-radius: 20px; padding: 4px 10px; cursor: pointer; white-space: nowrap; transition: background 0.15s; }
+.nearby-chip:hover { background: #61856F; color: #fff; border-color: #61856F; }
+.nearby-label { font-size: 10px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #aaa49e; }
+
 .leaflet-control-attribution { font-size: 10px !important; }
 </style>
 </head>
@@ -179,6 +184,7 @@ body {
     <p id="sb-title"></p>
     <p id="sb-location"></p>
     <p id="sb-excerpt"></p>
+    <div id="sb-nearby"></div>
     <a id="sb-btn" href="#" target="_blank">Read the full story &rarr;</a>
   </div>
 </div>
@@ -411,6 +417,13 @@ function openSidebar(d) {
 
 function closeSidebar() {
   document.getElementById('sidebar').classList.remove('open');
+function haversineKm(lat1,lng1,lat2,lng2){var R=6371,dL=(lat2-lat1)*Math.PI/180,dG=(lng2-lng1)*Math.PI/180,a=Math.sin(dL/2)*Math.sin(dL/2)+Math.cos(lat1*Math.PI/180)*Math.cos(lat2*Math.PI/180)*Math.sin(dG/2)*Math.sin(dG/2);return R*2*Math.atan2(Math.sqrt(a),Math.sqrt(1-a));}
+
+var nb=document.getElementById('sb-nearby');
+nb.innerHTML='';
+var others=destinations.map(function(o,i){return{o:o,i:i,km:haversineKm(d.lat,d.lng,o.lat,o.lng)};}).filter(function(x){return x.o.name!==d.name;}).sort(function(a,b){return a.km-b.km;}).slice(0,4);
+if(others.length){var lbl=document.createElement('p');lbl.className='nearby-label';lbl.textContent='Nearby on the map';nb.appendChild(lbl);others.forEach(function(x){var c=document.createElement('button');c.className='nearby-chip';c.textContent=x.o.name+' · '+Math.round(x.km)+'km';c.onclick=function(){openSidebar(x.o);};nb.appendChild(c);});}
+
 }
 
 map.on('click', function() { closeSidebar(); });
